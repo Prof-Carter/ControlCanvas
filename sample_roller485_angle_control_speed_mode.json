@@ -1,0 +1,336 @@
+{
+  "metadata": {
+    "app_name": "codex_arduino",
+    "model_name": "model_1",
+    "schema_version": 1
+  },
+  "settings": {
+    "target_platform": "arduino_mega",
+    "generated_language": "arduino_cpp",
+    "sample_time_sec": 0.005,
+    "timer_period_us": 5000,
+    "monitor_decimation": 1,
+    "serial_send_period_ms": 5,
+    "numeric_type": "float"
+  },
+  "blocks": [
+    {
+      "id": "block_1",
+      "type": "rectangular_pulse",
+      "name": "Rectangular Pulse",
+      "position": {
+        "x": 48,
+        "y": 48
+      },
+      "size": {
+        "width": 144,
+        "height": 72
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "out1",
+            "name": "out1",
+            "kind": "output"
+          }
+        ]
+      },
+      "parameters": {
+        "high_value": 90,
+        "high_value_tunable": false,
+        "low_value": 0,
+        "low_value_tunable": false,
+        "period_sec": 2,
+        "period_sec_tunable": false,
+        "duty_percent": 50,
+        "duty_percent_tunable": false,
+        "phase_percent": 0,
+        "phase_percent_tunable": false
+      }
+    },
+    {
+      "id": "block_2",
+      "type": "sum",
+      "name": "Sum",
+      "position": {
+        "x": 276,
+        "y": 60
+      },
+      "size": {
+        "width": 72,
+        "height": 72
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [
+          {
+            "id": "in1",
+            "name": "in1",
+            "kind": "input"
+          },
+          {
+            "id": "in2",
+            "name": "in2",
+            "kind": "input"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "out1",
+            "name": "out1",
+            "kind": "output"
+          }
+        ]
+      },
+      "parameters": {
+        "input_count": 2,
+        "signs": "+-"
+      }
+    },
+    {
+      "id": "block_3",
+      "type": "gain",
+      "name": "Gain",
+      "position": {
+        "x": 408,
+        "y": 60
+      },
+      "size": {
+        "width": 72,
+        "height": 72
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [
+          {
+            "id": "in1",
+            "name": "in1",
+            "kind": "input"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "out1",
+            "name": "out1",
+            "kind": "output"
+          }
+        ]
+      },
+      "parameters": {
+        "gain": 10,
+        "gain_expression": "10",
+        "operation_mode": "elementwise",
+        "gain_tunable": false
+      }
+    },
+    {
+      "id": "block_4",
+      "type": "roller_i2c_write",
+      "name": "Roller I2C Write",
+      "position": {
+        "x": 528,
+        "y": 60
+      },
+      "size": {
+        "width": 144,
+        "height": 72
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [
+          {
+            "id": "in1",
+            "name": "in1",
+            "kind": "input"
+          }
+        ],
+        "outputs": []
+      },
+      "parameters": {
+        "mode": "speed",
+        "i2c_address": "0x64",
+        "command_min": -1200,
+        "command_max": 1200
+      }
+    },
+    {
+      "id": "block_5",
+      "type": "roller_i2c_read",
+      "name": "Roller I2C Read",
+      "position": {
+        "x": 708,
+        "y": 60
+      },
+      "size": {
+        "width": 144,
+        "height": 72
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "out1",
+            "name": "out1",
+            "kind": "output"
+          }
+        ]
+      },
+      "parameters": {
+        "i2c_address": "0x64",
+        "read_type": "position_readback",
+        "subtract_initial_offset": true
+      }
+    },
+    {
+      "id": "block_6",
+      "type": "roller_i2c_param",
+      "name": "Roller I2C Param",
+      "position": {
+        "x": 708,
+        "y": 240
+      },
+      "size": {
+        "width": 144,
+        "height": 72
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [],
+        "outputs": []
+      },
+      "parameters": {
+        "i2c_address": "0x64",
+        "param_type": "speed_pid",
+        "tunable": false,
+        "kp": 2,
+        "kp_expression": "2",
+        "ki": 0,
+        "ki_expression": "0",
+        "kd": 850,
+        "kd_expression": "850"
+      }
+    },
+    {
+      "id": "block_7",
+      "type": "scope",
+      "name": "Scope",
+      "position": {
+        "x": 996,
+        "y": 60
+      },
+      "size": {
+        "width": 144,
+        "height": 72
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [
+          {
+            "id": "in1",
+            "name": "in1",
+            "kind": "input"
+          }
+        ],
+        "outputs": []
+      },
+      "parameters": {
+        "subplot_index": 1
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn_1",
+      "from": {
+        "block_id": "block_1",
+        "port_id": "out1"
+      },
+      "to": {
+        "block_id": "block_2",
+        "port_id": "in1"
+      },
+      "routing": {
+        "points": [],
+        "style": "smooth"
+      }
+    },
+    {
+      "id": "conn_2",
+      "from": {
+        "block_id": "block_2",
+        "port_id": "out1"
+      },
+      "to": {
+        "block_id": "block_3",
+        "port_id": "in1"
+      },
+      "routing": {
+        "points": [],
+        "style": "smooth"
+      }
+    },
+    {
+      "id": "conn_3",
+      "from": {
+        "block_id": "block_3",
+        "port_id": "out1"
+      },
+      "to": {
+        "block_id": "block_4",
+        "port_id": "in1"
+      },
+      "routing": {
+        "points": [],
+        "style": "smooth"
+      }
+    },
+    {
+      "id": "conn_4",
+      "from": {
+        "block_id": "block_5",
+        "port_id": "out1"
+      },
+      "to": {
+        "block_id": "block_2",
+        "port_id": "in2"
+      },
+      "routing": {
+        "points": [
+          {
+            "x": 888,
+            "y": 180
+          },
+          {
+            "x": 264,
+            "y": 180
+          }
+        ],
+        "style": "smooth"
+      }
+    },
+    {
+      "id": "conn_5",
+      "from": {
+        "block_id": "block_5",
+        "port_id": "out1"
+      },
+      "to": {
+        "block_id": "block_7",
+        "port_id": "in1"
+      },
+      "routing": {
+        "points": [],
+        "style": "smooth"
+      }
+    }
+  ],
+  "annotations": [],
+  "ui_state": {
+    "zoom_by_scope": {
+      "root": 0.8264462809917354
+    }
+  }
+}
