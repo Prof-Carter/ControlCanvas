@@ -1,0 +1,314 @@
+{
+  "metadata": {
+    "app_name": "codex_arduino",
+    "model_name": "mpu6050_accel",
+    "schema_version": 1
+  },
+  "settings": {
+    "target_platform": "arduino_mega",
+    "generated_language": "arduino_cpp",
+    "sample_time_sec": 0.005,
+    "timer_period_us": 5000,
+    "monitor_decimation": 1,
+    "serial_send_period_ms": 5,
+    "run_mode": "tuner",
+    "numeric_type": "float"
+  },
+  "blocks": [
+    {
+      "id": "block_433",
+      "type": "user_c_code",
+      "name": "MPU6050",
+      "position": {
+        "x": 306,
+        "y": 12
+      },
+      "size": {
+        "width": 156,
+        "height": 144
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [
+          {
+            "id": "in1",
+            "name": "in1",
+            "kind": "input"
+          },
+          {
+            "id": "in2",
+            "name": "in2",
+            "kind": "input"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "out1",
+            "name": "out1",
+            "kind": "output"
+          },
+          {
+            "id": "out2",
+            "name": "out2",
+            "kind": "output"
+          },
+          {
+            "id": "out3",
+            "name": "out3",
+            "kind": "output"
+          },
+          {
+            "id": "out4",
+            "name": "out4",
+            "kind": "output"
+          },
+          {
+            "id": "out5",
+            "name": "out5",
+            "kind": "output"
+          },
+          {
+            "id": "out6",
+            "name": "out6",
+            "kind": "output"
+          }
+        ]
+      },
+      "parameters": {
+        "input_count": 2,
+        "output_count": 6,
+        "includes": [],
+        "global_declarations": "#include <Wire.h>\n\nconst uint8_t g_mpu6050_addr = 0x68;\n\ntypedef struct\n{\n  int16_t ax;\n  int16_t ay;\n  int16_t az;\n\n  int16_t gx;\n  int16_t gy;\n  int16_t gz;\n} MPU6050_Data;\n\nMPU6050_Data g_mpu6050_data;\n\nfloat g_accel_scale = 16384.0f;\nfloat g_gyro_scale  = 131.0f;\n\nuint8_t g_prev_accel_config = 0xFF;\nuint8_t g_prev_gyro_config  = 0xFF;\n\nstatic void g_mpu6050_read(MPU6050_Data* data)\n{\n  uint8_t buf[14];\n\n  Wire.beginTransmission(g_mpu6050_addr);\n  Wire.write(0x3B);\n  Wire.endTransmission(false);\n\n  Wire.requestFrom((int)g_mpu6050_addr, 14);\n\n  if (Wire.available() < 14) {\n    return;\n  }\n\n  for (int i = 0; i < 14; i++) {\n    buf[i] = Wire.read();\n  }\n\n  data->ax = (int16_t)((buf[0] << 8) | buf[1]);\n  data->ay = (int16_t)((buf[2] << 8) | buf[3]);\n  data->az = (int16_t)((buf[4] << 8) | buf[5]);\n\n  data->gx = (int16_t)((buf[8] << 8) | buf[9]);\n  data->gy = (int16_t)((buf[10] << 8) | buf[11]);\n  data->gz = (int16_t)((buf[12] << 8) | buf[13]);\n}",
+        "init_code": "Wire.begin();\n\ndelay(100);\n\nWire.beginTransmission(g_mpu6050_addr);\nWire.write(0x6B);\nWire.write(0x00);\nWire.endTransmission();\n\nWire.beginTransmission(g_mpu6050_addr);\nWire.write(0x1C);\nWire.write(0x00);\nWire.endTransmission();\n\nWire.beginTransmission(g_mpu6050_addr);\nWire.write(0x1B);\nWire.write(0x00);\nWire.endTransmission();\n\ng_prev_accel_config = 0x00;\ng_prev_gyro_config  = 0x00;",
+        "step_code": "uint8_t accel_config;\nuint8_t gyro_config;\n\n/* Accelerometer range */\n\nif ((int)inputs[0] == 2) {\n  accel_config = 0x00;\n  g_accel_scale = 16384.0f;\n}\nelse if ((int)inputs[0] == 4) {\n  accel_config = 0x08;\n  g_accel_scale = 8192.0f;\n}\nelse if ((int)inputs[0] == 8) {\n  accel_config = 0x10;\n  g_accel_scale = 4096.0f;\n}\nelse {\n  accel_config = 0x18;\n  g_accel_scale = 2048.0f;\n}\n\n/* Gyroscope range */\n\nif ((int)inputs[1] == 250) {\n  gyro_config = 0x00;\n  g_gyro_scale = 131.0f;\n}\nelse if ((int)inputs[1] == 500) {\n  gyro_config = 0x08;\n  g_gyro_scale = 65.5f;\n}\nelse if ((int)inputs[1] == 1000) {\n  gyro_config = 0x10;\n  g_gyro_scale = 32.8f;\n}\nelse {\n  gyro_config = 0x18;\n  g_gyro_scale = 16.4f;\n}\n\n/* 設定変更時のみ書き込み */\n\nif (accel_config != g_prev_accel_config)\n{\n  Wire.beginTransmission(g_mpu6050_addr);\n  Wire.write(0x1C);\n  Wire.write(accel_config);\n  Wire.endTransmission();\n\n  g_prev_accel_config = accel_config;\n}\n\nif (gyro_config != g_prev_gyro_config)\n{\n  Wire.beginTransmission(g_mpu6050_addr);\n  Wire.write(0x1B);\n  Wire.write(gyro_config);\n  Wire.endTransmission();\n\n  g_prev_gyro_config = gyro_config;\n}\n\n/* データ取得 */\n\ng_mpu6050_read(&g_mpu6050_data);\n\n/* 出力 */\n\noutputs[0] = (float)g_mpu6050_data.ax / g_accel_scale;\noutputs[1] = (float)g_mpu6050_data.ay / g_accel_scale;\noutputs[2] = (float)g_mpu6050_data.az / g_accel_scale;\n\noutputs[3] = (float)g_mpu6050_data.gx / g_gyro_scale;\noutputs[4] = (float)g_mpu6050_data.gy / g_gyro_scale;\noutputs[5] = (float)g_mpu6050_data.gz / g_gyro_scale;",
+        "direct_feedthrough": true
+      }
+    },
+    {
+      "id": "block_439",
+      "type": "scope",
+      "name": "Scope",
+      "position": {
+        "x": 648,
+        "y": 12
+      },
+      "size": {
+        "width": 144,
+        "height": 72
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [
+          {
+            "id": "in1",
+            "name": "in1",
+            "kind": "input"
+          }
+        ],
+        "outputs": []
+      },
+      "parameters": {
+        "subplot_index": 1
+      }
+    },
+    {
+      "id": "block_440",
+      "type": "mux",
+      "name": "Mux",
+      "position": {
+        "x": 516,
+        "y": 12
+      },
+      "size": {
+        "width": 72,
+        "height": 72
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [
+          {
+            "id": "in1",
+            "name": "in1",
+            "kind": "input"
+          },
+          {
+            "id": "in2",
+            "name": "in2",
+            "kind": "input"
+          },
+          {
+            "id": "in3",
+            "name": "in3",
+            "kind": "input"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "out1",
+            "name": "out1",
+            "kind": "output"
+          }
+        ]
+      },
+      "parameters": {
+        "input_count": 3
+      }
+    },
+    {
+      "id": "block_443",
+      "type": "constant",
+      "name": "Accel range (2,4,8,16)",
+      "position": {
+        "x": 144,
+        "y": 12
+      },
+      "size": {
+        "width": 96,
+        "height": 72
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "out1",
+            "name": "out1",
+            "kind": "output"
+          }
+        ]
+      },
+      "parameters": {
+        "value": 2,
+        "value_expression": "2",
+        "value_tunable": false
+      }
+    },
+    {
+      "id": "block_444",
+      "type": "constant",
+      "name": "Gyro range (250,500,1000,2000)",
+      "position": {
+        "x": 144,
+        "y": 108
+      },
+      "size": {
+        "width": 96,
+        "height": 72
+      },
+      "orientation": 0,
+      "ports": {
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "out1",
+            "name": "out1",
+            "kind": "output"
+          }
+        ]
+      },
+      "parameters": {
+        "value": 1000,
+        "value_expression": "1000",
+        "value_tunable": false
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn_469",
+      "from": {
+        "block_id": "block_433",
+        "port_id": "out1"
+      },
+      "to": {
+        "block_id": "block_440",
+        "port_id": "in1"
+      },
+      "routing": {
+        "points": [],
+        "style": "smooth"
+      }
+    },
+    {
+      "id": "conn_470",
+      "from": {
+        "block_id": "block_433",
+        "port_id": "out2"
+      },
+      "to": {
+        "block_id": "block_440",
+        "port_id": "in2"
+      },
+      "routing": {
+        "points": [],
+        "style": "smooth"
+      }
+    },
+    {
+      "id": "conn_471",
+      "from": {
+        "block_id": "block_433",
+        "port_id": "out3"
+      },
+      "to": {
+        "block_id": "block_440",
+        "port_id": "in3"
+      },
+      "routing": {
+        "points": [],
+        "style": "smooth"
+      }
+    },
+    {
+      "id": "conn_475",
+      "from": {
+        "block_id": "block_440",
+        "port_id": "out1"
+      },
+      "to": {
+        "block_id": "block_439",
+        "port_id": "in1"
+      },
+      "routing": {
+        "points": [],
+        "style": "smooth"
+      }
+    },
+    {
+      "id": "conn_480",
+      "from": {
+        "block_id": "block_443",
+        "port_id": "out1"
+      },
+      "to": {
+        "block_id": "block_433",
+        "port_id": "in1"
+      },
+      "routing": {
+        "points": [],
+        "style": "smooth"
+      }
+    },
+    {
+      "id": "conn_481",
+      "from": {
+        "block_id": "block_444",
+        "port_id": "out1"
+      },
+      "to": {
+        "block_id": "block_433",
+        "port_id": "in2"
+      },
+      "routing": {
+        "points": [],
+        "style": "smooth"
+      }
+    }
+  ],
+  "annotations": [],
+  "ui_state": {
+    "zoom_by_scope": {
+      "root": 1
+    }
+  }
+}
